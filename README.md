@@ -1,7 +1,7 @@
-# popskl-near
+# popskl
 
 
-
+# Deployment
 To deploy app to Vercel:
 Go to Vercel and sign in with your GitHub
 Then click on New Project button and then select popskl repo
@@ -14,3 +14,4 @@ Click Deploy
 ![img.png](img.png)
 
 Now you can see your deployed website by going to your dashboard, selecting your project, and copying the URL from there!
+
