@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import QrReader from "react-qr-reader";
+import QrReader from "../assets/js/react-qr-reader/lib/index.js";
 const BOATLOAD_OF_GAS = Big(3).times(10 ** 13).toFixed();
 import Big from "big.js";
 import { toast } from "react-toastify";
