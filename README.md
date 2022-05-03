@@ -1,17 +1,14 @@
-# popskl
+# PoPskl
 
+Proof of Presence done right.
 
-# Deployment
-To deploy app to Vercel:
-Go to Vercel and sign in with your GitHub
-Then click on New Project button and then select popskl repo
+Main idea of the project is to create an application with which person can prove to other(s) being at some place at some moment in time.
 
-When configuring your new project, Vercel will allow you to customize your Root Directory
-Click Edit next to Root Directory and set it to popskl
-Select the Framework as Next.js
-Click Deploy
+At the moment project consists of two parts: [contract](./contracts/) and [dApp](./popskl/).
+For actual usage consult corresponding readmes.
 
-![img.png](img.png)
+## User flow
 
-Now you can see your deployed website by going to your dashboard, selecting your project, and copying the URL from there!
+![user-flow](./documentation/user-flow.png)
 
+For now, actual proof doesn't contain location & time. Contract just counts the number of times user submitted code.
