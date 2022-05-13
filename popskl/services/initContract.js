@@ -8,7 +8,7 @@ import {
 } from "near-api-js";
 import getConfig from "./config";
 
-const nearConfig = getConfig(process.env.NODE_ENV || "testnet");
+export const nearConfig = getConfig(process.env.NODE_ENV || "testnet");
 
 export async function initContract(accountName, publicKey, privateKey) {
     const near = await connect(

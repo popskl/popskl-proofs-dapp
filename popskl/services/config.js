@@ -9,6 +9,7 @@ function getConfig(env) {
                 contractName: CONTRACT_NAME,
                 walletUrl: "https://wallet.near.org",
                 helperUrl: "https://helper.mainnet.near.org",
+                explorerUrl: "https://explorer.mainnet.near.org",
             };
         // This is an example app so production is set to testnet.
         // You can move production to mainnet if that is applicable.
@@ -21,6 +22,7 @@ function getConfig(env) {
                 contractName: CONTRACT_NAME,
                 walletUrl: "https://wallet.testnet.near.org",
                 helperUrl: "https://helper.testnet.near.org",
+                explorerUrl: "https://explorer.testnet.near.org",
             };
         case "betanet":
             return {
@@ -29,6 +31,7 @@ function getConfig(env) {
                 contractName: CONTRACT_NAME,
                 walletUrl: "https://wallet.betanet.near.org",
                 helperUrl: "https://helper.betanet.near.org",
+                explorerUrl: "https://explorer.betanet.near.org",
             };
         case "local":
             return {

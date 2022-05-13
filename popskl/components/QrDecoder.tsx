@@ -1,148 +1,189 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import QrReader from "../assets/js/react-qr-reader/lib/index.js";
-const BOATLOAD_OF_GAS = Big(3).times(10 ** 13).toFixed();
-import Big from "big.js";
 import { toast } from "react-toastify";
-import styles from '../styles/Home.module.css';
-import { useRouter } from 'next/router'
-declare global {
-    interface Window {
-        contract: any;
+import styled from "@emotion/styled";
+import { nearConfig } from "../services/initContract.js";
+import Spinner from "./Spinner";
+
+const StyledQRReader = styled(QrReader)`
+  width: 100%;
+  section {
+    border-radius: 16px;
+    div {
+      border-radius: 16px !important;
+      border: 15px solid rgba(0, 0, 0, 0.3) !important;
+      box-shadow: unset !important;
     }
-}
+    video {
+      border-radius: 16px !important;
+    }
+  }
+`;
+
+const DecoderLayout = styled.div`
+  z-index: 2;
+  max-width: 450px;
+  max-height: 450px;
+`;
+const StyledInput = styled.input`
+  display: flex;
+  justify-content: center;
+  border: none;
+  align-items: center;
+  width: 100%;
+  background: #276ee7;
+  border-radius: 100px;
+  height: 50px;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 22px;
+  padding: 10px 80px;
+  color: #ffffff;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  :focus {
+    outline: none;
+  }
+`;
+const InputBox = styled.div`
+  margin-top: 80px;
+`;
+const ScannedLayout = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.8),
+      rgba(255, 255, 255, 0.8)
+    ),
+    #79abff;
+`;
+const StyledLink = styled.a`
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  border: none;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  background: #276ee7;
+  border-radius: 100px;
+  height: auto;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 22px;
+  padding: 10px 20px;
+  color: #ffffff;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  text-decoration: none;
+  :focus {
+    outline: none;
+  }
+`;
 
 export default function Page() {
-    const router = useRouter();   
-    const [error, setError] = useState<string | undefined>();
-    const handleError = (e: any) => setError(e);
-    const [transactionUrl, setTransactionUrl] = useState("");
-    const [scanned, setScanned] = useState("not-scanned");
-    const [legacyMode, setLegacyMode] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const handleError = (e: any) => setError(e);
+  const [transactionUrl, setTransactionUrl] = useState("");
+  const [scanned, setScanned] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [legacyMode, setLegacyMode] = useState(false);
 
-    const qrReader1 = useRef(null);
-    const qrReader2 = useRef(null);
+  const qrReaderRef = useRef(null);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        let transactionHashes = params.get('transactionHashes');
-        if (transactionHashes) {
-            setTransactionUrl("https://explorer.testnet.near.org/transactions/" + transactionHashes);
-            toast.success("QR code Successfully confirmed", {
-                position: toast.POSITION.BOTTOM_CENTER,
-            });
-            setScanned("scanned");
-        } else {
-            setScanned("not-scanned");
+  async function handleScan(data: any) {
+    if (data) {
+      setLoading(true);
+      window.walletConnection.account().functionCall(
+        {
+          contractId: nearConfig.contractName!,
+          methodName: "confirm_code",
+          args: { code: data },
         }
-    }, [])
-
-    async function handleScan(data: any) {
-        if (data && scanned == "not-scanned") {
-            setScanned("scanned");
-            sessionStorage.setItem('currentstate', 'readqr');
-            const status = await window.contract.confirm_code(
-                { code: data },
-                BOATLOAD_OF_GAS,
-                Big('0').times(10 ** 24).toFixed()
-            );
-            if (status)
-                toast.success("QR code is validated on chain. Click on Transaction log to verify!", {
-                    position: toast.POSITION.BOTTOM_CENTER,
-                });
-            else
-                toast.error("Duplicate entry of QR code", {
-                    position: toast.POSITION.BOTTOM_CENTER,
-                });
-        }
+      ).then((outcome) => {
+        setScanned(true);
+        sessionStorage.setItem("currentstate", "readqr");
+        setTransactionUrl(`${nearConfig.explorerUrl!}/transactions/${outcome.transaction.hash}`)
+        toast.success(
+          "QR code is validated on chain. Click on Transaction log to verify!",
+          {
+            position: toast.POSITION.BOTTOM_CENTER,
+          }
+        );
+      }).catch((err) => {
+        console.error(err)
+        toast.error(mapError(err), {
+          position: toast.POSITION.BOTTOM_CENTER,
+        });
+      }).finally(() => {
+        setLoading(false);
+      });
     }
+  }
 
-    function openImageDialog() {
-        setLegacyMode(true);
-        try {
-            // @ts-ignore
-            qrReader2.current.openImageDialog()
-        } catch (e) {
-            setTimeout(function () {
-                // @ts-ignore
-                qrReader2.current.openImageDialog()
-            }, 2000);
-        }
+  function openImageDialog() {
+    setLegacyMode(true);
+    try {
+      // @ts-ignore
+      qrReaderRef.current.openImageDialog();
+    } catch (e) {
+      setTimeout(function () {
+        // @ts-ignore
+        qrReaderRef.current.openImageDialog();
+      }, 1000);
     }
+  }
 
-    // @ts-ignore
-    return (
+  if (loading) {
+    return <Spinner />
+  }
+
+  return (
+    <DecoderLayout>
+      {!scanned && (
         <>
-            <div >
-                <div >
-                    <div className={styles.space}>
-                <button onClick={() => router.push("/Dashboard")} className={styles.connect}>
-                           Dashboard
-                        </button>
-                        </div>
-                    {scanned == "not-scanned" && !legacyMode && (
-                        <>
-                            <QrReader ref={qrReader1}
-                                delay={300}
-                                onError={handleError}
-                                onScan={handleScan}
-                                className="QrReader"
-                                legacyMode={false}
-                            />
-                        </>
-                    )}
-                    {scanned == "not-scanned" && legacyMode && (
-                        <>
-                            <QrReader ref={qrReader2}
-                                delay={300}
-                                onError={handleError}
-                                onScan={handleScan}
-                                className="QrReader"
-                                legacyMode={true}
-
-                            />
-                        </>
-                    )}
-                    {scanned == "not-scanned" && (
-                                 <div className={styles.space}>
-                            <div className={styles.imp_txt}>
-                                If you have issue with QR Reader click below to access the camera. If Camera access not available upload an image from QR code.
-                            </div>
-                            <input className={styles.sub_btn} type="button" value="Access Camera/Upload QR" onClick={openImageDialog} />
-                        </div>
-                    )}
-                    {transactionUrl == "" && scanned == "scanned" && (
-                                  <div className={styles.space}>
-                             <div className={styles.imp_txt}>
-                            <a className={styles.imp_txt} target="_blank"
-                                href="https://explorer.testnet.near.org/accounts/dev-1646808675719-36510749528369"
-                                rel="noopener noreferrer">
-                                Click to check the transaction for all the contract
-                            </a>
-                        </div>
-                        </div>
-                    )}
-                </div>
-                {transactionUrl == "" && (
-                              <div className={styles.space}>
-                    <div className={styles.imp_txt}>
-                        <a href="#" className={styles.imp_txt}>
-                            Enjoy Being Present
-                        </a>{" "}
-                        | <a href="#" className={styles.imp_txt}>Issued by Sponsor</a>
-                    </div>
-                    </div>
-                )}
-                {transactionUrl && (
-                              <div className={styles.space}>
-                      <div className={styles.imp_txt}>
-                        <a className={styles.imp_txt} target="_blank" href={transactionUrl} rel="noopener noreferrer">
-                            Click to check the transaction
-                        </a>{" "}
-                        | <a className={styles.imp_txt} href="#">Thank you</a>
-                    </div>
-                    </div>
-                )}
-            </div>
+          <StyledQRReader
+            ref={qrReaderRef}
+            delay={300}
+            onError={handleError}
+            onScan={handleScan}
+            legacyMode={!!legacyMode}
+          />
+          <InputBox>
+            <StyledInput
+              type="button"
+              value="Upload from gallery"
+              onClick={openImageDialog}
+            />
+          </InputBox>
         </>
-    );
+      )}
+      {scanned && (
+        <ScannedLayout>
+          <StyledLink
+            target="_blank"
+            href={transactionUrl}
+            rel="noopener noreferrer"
+          >
+            Check the transaction on blockchain explorer
+          </StyledLink>
+        </ScannedLayout>
+      )}
+    </DecoderLayout>
+  );
+}
+
+function mapError(err: Error): string {
+  if (err.message.includes("no longer active")) {
+    return "This code is no longer active!";
+  }
+  return "Some error happened during QR confirmation!";
 }
